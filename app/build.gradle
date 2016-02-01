@@ -1,5 +1,9 @@
 apply plugin: 'com.android.application'
 
+ant.importBuild 'assets.xml'
+preBuild.dependsOn(list, checksum)
+clean.dependsOn(clean_assets)
+
 android {
     compileSdkVersion 21
     buildToolsVersion "23.0.1"

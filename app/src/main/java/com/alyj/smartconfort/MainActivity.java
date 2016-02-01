@@ -1,5 +1,6 @@
 package com.alyj.smartconfort;
 
+
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -32,6 +33,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import android.speech.SpeechRecognizer;
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.ToggleButton;
+
+
+
+
+
 
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public class MainActivity extends ActionBarActivity {
@@ -48,10 +61,17 @@ public class MainActivity extends ActionBarActivity {
     private TextView txtTemperature;
     private TextView txtLuminosite;
     private TextView txtHumidite;
+    private TextView returnedText;
+    private ToggleButton toggleButton;
+    private ProgressBar progressBar;
+    private SpeechRecognizer speech = null;
+    private Intent recognizerIntent;
+    private String LOG_TAG = "VoiceRecognitionActivity";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         mHandler = new Handler();
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
             Toast.makeText(this, "BLE Not Supported",
@@ -234,4 +254,11 @@ public class MainActivity extends ActionBarActivity {
             }
         };
     }
+
+
+
+
+
+
+
 
