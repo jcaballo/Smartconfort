@@ -168,7 +168,7 @@ public class MainActivity extends ActionBarActivity {
         public void connectToDevice(BluetoothDevice device) {
             if (mGatt == null) {
                 mGatt = device.connectGatt(this, false, gattCallback);
-                scanLeDevice(false);// will stop after first device detection
+                scanLeDevice(false);
             }
         }
 
@@ -210,6 +210,11 @@ public class MainActivity extends ActionBarActivity {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                /**
+                 * Problème récupération de la valeur, bizarre
+                 */
+                //characteristic.getStringValue(0);
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -218,8 +223,6 @@ public class MainActivity extends ActionBarActivity {
                 });
                 System.err.println(" temp "+characteristic.getValue());
 
-//                gatt.readCharacteristic(services.get(1).getCharacteristics().get
-//                        (0));
             }
 
             @Override
