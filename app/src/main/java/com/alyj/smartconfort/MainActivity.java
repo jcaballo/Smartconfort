@@ -110,15 +110,19 @@ public class MainActivity extends Activity implements
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    /** Pour une mis à jour automatique,  on tourne en boucle **/
                     while (true) {
                         try {
                             Thread.sleep(2000);
                             for (String property : propertiesToDisplay) {
                                 BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString(property));
-                                mGatt.readCharacteristic(characteristic);
-                                Thread.sleep(200);
-                                if (characteristic != null)
+                                if (characteristic != null){
+                                    mGatt.readCharacteristic(characteristic);
                                     displayData(characteristic);
+                                    /** Impossible de lire deux fois successivement, donc un sleep s'impose **/
+                                    Thread.sleep(200);
+                                }
+
                             }
                         } catch (InterruptedException e) {
                             e.printStackTrace();
