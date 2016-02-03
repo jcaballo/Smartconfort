@@ -27,6 +27,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alyj.smartconfort.flowerAPI.FlowerPowerConstants;
+import com.alyj.smartconfort.flowerAPI.ValueMapper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,6 +68,9 @@ public class MainActivity extends ActionBarActivity {
     private SpeechRecognizer speech = null;
     private Intent recognizerIntent;
     private String LOG_TAG = "VoiceRecognitionActivity";
+    private List<String> propertiesToDisplay=Arrays.asList(FlowerPowerConstants.CHARACTERISTIC_UUID_TEMPERATURE,FlowerPowerConstants.CHARACTERISTIC_UUID_SUNLIGHT,FlowerPowerConstants.CHARACTERISTIC_UUID_SOIL_MOISTURE);
+    private BluetoothGattService service;
+    ValueMapper valueMapper;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -118,6 +122,7 @@ public class MainActivity extends ActionBarActivity {
         @Override
         protected void onResume() {
             super.onResume();
+            valueMapper=ValueMapper.getInstance(this);
             INUSE=true;
             if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -222,29 +227,52 @@ public class MainActivity extends ActionBarActivity {
             public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                 List<BluetoothGattService> services = gatt.getServices();
                 Log.i("onServicesDiscovered", services.toString());
-                BluetoothGattService service=gatt.getService(UUID.fromString(FlowerPowerConstants.SERVICE_UUID_FLOWER_POWER ));
-                BluetoothGattCharacteristic characteristic=service.getCharacteristic(UUID.fromString(FlowerPowerConstants.CHARACTERISTIC_UUID_TEMPERATURE));
-                gatt.readCharacteristic(characteristic);
+                service=gatt.getService(UUID.fromString(FlowerPowerConstants.SERVICE_UUID_FLOWER_POWER));
+
+
                 try {
                     Thread.sleep(200);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                /**
-                 * Problème récupération de la valeur, bizarre
-                 */
-                //characteristic.getStringValue(0);
+
 
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        txtTemperature.setText("20");
+                        while (true) {
+                            try {
+                                Thread.sleep(2000);
+                                for (String property : propertiesToDisplay) {
+                                    BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString(property));
+                                    mGatt.readCharacteristic(characteristic);
+                                    Thread.sleep(200);
+                                    if (characteristic != null)
+                                        displayData(characteristic);
+                                }
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
                 });
-                System.err.println(" temp "+characteristic.getValue());
 
             }
+private void displayData(BluetoothGattCharacteristic characteristic){
+    switch (characteristic.getUuid().toString()){
+        case FlowerPowerConstants.CHARACTERISTIC_UUID_TEMPERATURE:
+            txtTemperature.setText(""+valueMapper.mapTemperature(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 0)));
+            break;
+        case FlowerPowerConstants.CHARACTERISTIC_UUID_SUNLIGHT:
+            txtLuminosite.setText(""+valueMapper.mapSunlight(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 0)));
+            break;
+        case FlowerPowerConstants.CHARACTERISTIC_UUID_SOIL_MOISTURE:
+            txtHumidite.setText(""+valueMapper.mapSoilMoisture(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,0)));
+            break;
+        default:break;
 
+    }
+}
             @Override
             public void onCharacteristicRead(BluetoothGatt gatt,
                                              BluetoothGattCharacteristic
@@ -253,7 +281,9 @@ public class MainActivity extends ActionBarActivity {
 
             }
         };
-    }
+
+
+}
 
 
 
