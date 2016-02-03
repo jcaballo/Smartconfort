@@ -1,0 +1,76 @@
+#JSGF V1.0;
+
+grammar nombres;
+
+<nombre> =
+	 ( zero
+	 | un
+	 | deux
+	 | trois
+	 | quatre
+	 | cinq
+	 | six
+	 | sept
+	 | huit
+	 | neuf
+	 | dix
+	 | onze
+	 | douze
+	 | treize
+	 | quatorze
+	 | quinze
+	 | seize
+	 | dix-sept
+	 | dix-huit
+	 | dix-neuf
+	 | vingt
+	 | vingt_et_un
+	 | vingt-deux
+	 | vingt-trois
+	 | (vingt ( quatre
+		   | cinq
+		   | six
+		   | sept
+		   | huit
+		   | neuf
+		    )
+		)
+	 | trente
+	 | trente_et_un
+	 | trente-huit
+	 | (trente ( deux
+		   | trois
+		   | quatre
+		   | cinq
+		   | six
+		   | sept
+		   | neuf
+		   )
+		)
+	 | quarante
+     	 | quarante_et_un
+     	 | quarante-huit
+     	 | (quarante ( deux
+     		   | trois
+     		   | quatre
+     		   | cinq
+     		   | six
+     		   | sept
+     		   | neuf
+     		   )
+     		)
+	 | cinquante
+          	 | cinquante_et_un
+          	 | cinquante-huit
+          	 | (cinquante ( deux
+          		   | trois
+          		   | quatre
+          		   | cinq
+          		   | six
+          		   | sept
+          		   | neuf
+          		   )
+          		)
+	 );
+
+	 public <nombres> = <nombre>+;
