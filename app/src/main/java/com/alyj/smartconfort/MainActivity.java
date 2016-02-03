@@ -164,10 +164,10 @@ public class MainActivity extends Activity implements
                         @Override
                         public void run() {
 
-                            /*if (device.getName().equalsIgnoreCase("Flower power AAB2")) {
+                            if (device.getName()!=null && device.getName().equalsIgnoreCase("Flower power AAB2")) {
                                 Log.i("FOund ", device.getName());
                                 connectToDevice(device);
-                            }*/
+                            }
 
                         }
                     });
