@@ -118,7 +118,6 @@ public class MainActivity extends Activity implements
                                 BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString(property));
                                 if (characteristic != null){
                                     mGatt.readCharacteristic(characteristic);
-                                    displayData(characteristic);
                                     /** Impossible de lire deux fois successivement, donc un sleep s'impose **/
                                     Thread.sleep(200);
                                 }
@@ -133,7 +132,11 @@ public class MainActivity extends Activity implements
 
         }
 
-        private void displayData(BluetoothGattCharacteristic characteristic) {
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt,
+                                         BluetoothGattCharacteristic
+                                                 characteristic, int status) {
             switch (characteristic.getUuid().toString()) {
                 case FlowerPowerConstants.CHARACTERISTIC_UUID_TEMPERATURE:
                     txtTemperature.setText("" + valueMapper.mapTemperature(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 0)));
@@ -148,12 +151,6 @@ public class MainActivity extends Activity implements
                     break;
 
             }
-        }
-
-        @Override
-        public void onCharacteristicRead(BluetoothGatt gatt,
-                                         BluetoothGattCharacteristic
-                                                 characteristic, int status) {
             Log.i("onCharacteristicRead", Arrays.toString(characteristic.getValue()));
 
         }
