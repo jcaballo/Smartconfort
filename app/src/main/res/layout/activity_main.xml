@@ -44,7 +44,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:layout_weight="1"
-                android:text="Luyminosité"
+                android:text="Luminosité"
                 android:textStyle="bold" />
 
             <TextView
@@ -87,7 +87,7 @@
             android:id="@+id/textView1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Ok SmartConfort !"
+            android:text="Ok SmartConfort Réveil toi!"
             android:layout_below="@+id/progressBar1"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="47dp" />
