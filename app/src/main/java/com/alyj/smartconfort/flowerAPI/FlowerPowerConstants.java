@@ -1,51 +1,47 @@
 package com.alyj.smartconfort.flowerAPI;
 
 import android.bluetooth.BluetoothGattCharacteristic;
-import android.content.Context;
 
-public class FlowerPowerConstants
-{
+public class FlowerPowerConstants {
 
-    public final static String NAME_SUNLIGHT_UUID                = "luminosité";
-    public final static String NAME_SOIL_EC                      = "humidité du sol";
-    public final static String NAME_SOIL_TEMP                    = "température du sol";
-    public final static String NAME_AIR_TEMP                     = "température de l'air";
-    public final static String NAME_SOIL_WC                      = "moisissure";
+    public final static String NAME_SUNLIGHT_UUID = "luminosité";
+    public final static String NAME_SOIL_EC = "humidité du sol";
+    public final static String NAME_SOIL_TEMP = "température du sol";
+    public final static String NAME_AIR_TEMP = "température de l'air";
+    public final static String NAME_SOIL_WC = "moisissure";
 
-    public final static String NAME_BATTERY_CHARAC               = "batterie";
+    public final static String NAME_BATTERY_CHARAC = "batterie";
 
     public final static String TAG = "FlowerPower4Android";
 
-    public final static String SERVICE_UUID_DEVICE_INFORMATION 			= "0000180a-0000-1000-8000-00805f9b34fb";
-    public final static String CHARACTERISTIC_UUID_SYSTEM_ID 			= "00002a23-0000-1000-8000-00805f9b34fb";
-    public final static String CHARACTERISTIC_UUID_MODEL_NR 			= "00002a24-0000-1000-8000-00805f9b34fb";
-    public final static String CHARACTERISTIC_UUID_SERIAL_NR 			= "00002a25-0000-1000-8000-00805f9b34fb";
-    public final static String CHARACTERISTIC_UUID_FIRMWARE_REVISION	= "00002a26-0000-1000-8000-00805f9b34fb";
-    public final static String CHARACTERISTIC_UUID_HARDWARE_REVISION	= "00002a27-0000-1000-8000-00805f9b34fb";
-    public final static String CHARACTERISTIC_UUID_SOFTWARE_REVISION	= "00002a28-0000-1000-8000-00805f9b34fb";
-    public final static String CHARACTERISTIC_UUID_MANUFACTURER_NAME	= "00002a29-0000-1000-8000-00805f9b34fb";
-    public final static String CHARACTERISTIC_UUID_CERT_DATA			= "00002a2a-0000-1000-8000-00805f9b34fb"; // IEEE 11073-20601 regulatory certification data list
-    public final static String CHARACTERISTIC_UUID_PNP_ID				= "00002a50-0000-1000-8000-00805f9b34fb";
+    public final static String SERVICE_UUID_DEVICE_INFORMATION = "0000180a-0000-1000-8000-00805f9b34fb";
+    public final static String CHARACTERISTIC_UUID_SYSTEM_ID = "00002a23-0000-1000-8000-00805f9b34fb";
+    public final static String CHARACTERISTIC_UUID_MODEL_NR = "00002a24-0000-1000-8000-00805f9b34fb";
+    public final static String CHARACTERISTIC_UUID_SERIAL_NR = "00002a25-0000-1000-8000-00805f9b34fb";
+    public final static String CHARACTERISTIC_UUID_FIRMWARE_REVISION = "00002a26-0000-1000-8000-00805f9b34fb";
+    public final static String CHARACTERISTIC_UUID_HARDWARE_REVISION = "00002a27-0000-1000-8000-00805f9b34fb";
+    public final static String CHARACTERISTIC_UUID_SOFTWARE_REVISION = "00002a28-0000-1000-8000-00805f9b34fb";
+    public final static String CHARACTERISTIC_UUID_MANUFACTURER_NAME = "00002a29-0000-1000-8000-00805f9b34fb";
+    public final static String CHARACTERISTIC_UUID_CERT_DATA = "00002a2a-0000-1000-8000-00805f9b34fb"; // IEEE 11073-20601 regulatory certification data list
+    public final static String CHARACTERISTIC_UUID_PNP_ID = "00002a50-0000-1000-8000-00805f9b34fb";
 
 
-
-    public final static String SERVICE_UUID_BATTERY_LEVEL 				= "0000180f-0000-1000-8000-00805f9b34fb"; // e.g. for battery
-    public final static String CHARACTERISTIC_UUID_BATTERY_LEVEL		= "00002a19-0000-1000-8000-00805f9b34fb";
-
+    public final static String SERVICE_UUID_BATTERY_LEVEL = "0000180f-0000-1000-8000-00805f9b34fb"; // e.g. for battery
+    public final static String CHARACTERISTIC_UUID_BATTERY_LEVEL = "00002a19-0000-1000-8000-00805f9b34fb";
 
 
-    public final static String SERVICE_UUID_ADDITIONAL_INFORMATION 		= "39e1fe00-84a8-11e2-afba-0002a5d5c51b";
-    public final static String CHARACTERISTIC_UUID_FRIENDLY_NAME		= "39e1fe03-84a8-11e2-afba-0002a5d5c51b";
-    public final static String CHARACTERISTIC_UUID_COLOR	 			= "39e1fe04-84a8-11e2-afba-0002a5d5c51b";
+    public final static String SERVICE_UUID_ADDITIONAL_INFORMATION = "39e1fe00-84a8-11e2-afba-0002a5d5c51b";
+    public final static String CHARACTERISTIC_UUID_FRIENDLY_NAME = "39e1fe03-84a8-11e2-afba-0002a5d5c51b";
+    public final static String CHARACTERISTIC_UUID_COLOR = "39e1fe04-84a8-11e2-afba-0002a5d5c51b";
 
 
-    public final static String SERVICE_UUID_FLOWER_POWER 				= "39e1fa00-84a8-11e2-afba-0002a5d5c51b";
-    public final static String CHARACTERISTIC_UUID_LIVE_MODE			= "39e1fa06-84a8-11e2-afba-0002a5d5c51b";
-    public final static String CHARACTERISTIC_UUID_SUNLIGHT 			= "39e1fa01-84a8-11e2-afba-0002a5d5c51b";
-    public final static String CHARACTERISTIC_UUID_SOIL_EC              = "39e1fa02-84a8-11e2-afba-0002a5d5c51b";
-    public final static String CHARACTERISTIC_UUID_SOIL_TEMP            = "39e1fa03-84a8-11e2-afba-0002a5d5c51b";
-    public final static String CHARACTERISTIC_UUID_TEMPERATURE 			= "39e1fa04-84a8-11e2-afba-0002a5d5c51b";
-    public final static String CHARACTERISTIC_UUID_SOIL_MOISTURE		= "39e1fa05-84a8-11e2-afba-0002a5d5c51b";
+    public final static String SERVICE_UUID_FLOWER_POWER = "39e1fa00-84a8-11e2-afba-0002a5d5c51b";
+    public final static String CHARACTERISTIC_UUID_LIVE_MODE = "39e1fa06-84a8-11e2-afba-0002a5d5c51b";
+    public final static String CHARACTERISTIC_UUID_SUNLIGHT = "39e1fa01-84a8-11e2-afba-0002a5d5c51b";
+    public final static String CHARACTERISTIC_UUID_SOIL_EC = "39e1fa02-84a8-11e2-afba-0002a5d5c51b";
+    public final static String CHARACTERISTIC_UUID_SOIL_TEMP = "39e1fa03-84a8-11e2-afba-0002a5d5c51b";
+    public final static String CHARACTERISTIC_UUID_TEMPERATURE = "39e1fa04-84a8-11e2-afba-0002a5d5c51b";
+    public final static String CHARACTERISTIC_UUID_SOIL_MOISTURE = "39e1fa05-84a8-11e2-afba-0002a5d5c51b";
 
     /*
      * Constants to be used to pass the device address between Activities via Intents.
@@ -63,8 +59,7 @@ public class FlowerPowerConstants
     public final static String PERSISTENCY_STORAGE_LOCATION_INTERNAL = "internal";
     public final static String PERSISTENCY_STORAGE_LOCATION_DATABASE = "database";
 
-    public static String getCharacteristicName(BluetoothGattCharacteristic characteristic)
-    {
+    public static String getCharacteristicName(BluetoothGattCharacteristic characteristic) {
         String uuid = characteristic.getUuid().toString();
         if (uuid.equals(CHARACTERISTIC_UUID_SYSTEM_ID))
             return "System ID";

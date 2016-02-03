@@ -7,6 +7,6 @@ import java.util.List;
  * Created by yirou on 01/02/16.
  */
 public class Piece {
-    private List<Capteur>capteurs=new ArrayList<>();
+    private List<Capteur> capteurs = new ArrayList<>();
 
 }
