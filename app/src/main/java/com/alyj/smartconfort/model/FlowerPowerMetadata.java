@@ -10,7 +10,6 @@ public class FlowerPowerMetadata implements Serializable {
     // static fields, these normally do not change
     private String systemId = "";
 
-    ;
     private String modelNr = "";
     private String serialNr = "";
     private String firmwareRevision = "";
