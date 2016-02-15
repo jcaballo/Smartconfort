@@ -114,15 +114,16 @@ public class MainActivity extends Activity implements
                     while (true) {
                         try {
                             Thread.sleep(2000);
-                            for (String property : propertiesToDisplay) {
+                         System.err.println("service "+service.getUuid());
+                            /*for (String property : propertiesToDisplay) {
                                 BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString(property));
                                 if (characteristic != null){
                                     mGatt.readCharacteristic(characteristic);
-                                    /** Impossible de lire deux fois successivement, donc un sleep s'impose **/
+                                    *//** Impossible de lire deux fois successivement, donc un sleep s'impose **//*
                                     Thread.sleep(200);
                                 }
 
-                            }
+                            }*/
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -173,16 +174,7 @@ public class MainActivity extends Activity implements
                     });
                 }
             };
-    private ScanCallback mScanCallback = new ScanCallback() {
-        @Override
-        public void onScanResult(int callbackType, ScanResult result) {
-            Log.i("callbackType, Found", String.valueOf(callbackType));
-            BluetoothDevice btDevice = result.getDevice();
-            connectToDevice(btDevice);
-        }
 
-
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -233,25 +225,12 @@ public class MainActivity extends Activity implements
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    if (Build.VERSION.SDK_INT < 21) {
                         mBluetoothAdapter.stopLeScan(LeOldScanner);
-                    } else {
-                        mLEScanner.stopScan(mScanCallback);
-
-                    }
                 }
             }, SCAN_PERIOD);
-            if (Build.VERSION.SDK_INT < 21) {
                 mBluetoothAdapter.startLeScan(LeOldScanner);
-            } else {
-                mLEScanner.startScan(filters, settings, mScanCallback);
-            }
         } else {
-            if (Build.VERSION.SDK_INT < 21) {
                 mBluetoothAdapter.stopLeScan(LeOldScanner);
-            } else {
-                mLEScanner.stopScan(mScanCallback);
-            }
         }
     }
 
@@ -349,13 +328,7 @@ public class MainActivity extends Activity implements
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         } else {
-            if (Build.VERSION.SDK_INT >= 21) {
-                mLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
-                settings = new ScanSettings.Builder()
-                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-                        .build();
-                filters = new ArrayList<>();
-            }
+        
             scanLeDevice(true);
         }
     }
