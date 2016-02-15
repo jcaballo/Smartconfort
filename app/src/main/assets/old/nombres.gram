@@ -1,0 +1,16 @@
+#JSGF V1.0;
+
+grammar nombres;
+
+<nombre> =
+	  zero
+	 | un
+	 | deux
+	 | trois
+	 | quatre
+	 | cinq
+	 | six
+	 | sept
+	 | huit
+	 | neuf;
+	 public <nombres> = <nombre>+;
