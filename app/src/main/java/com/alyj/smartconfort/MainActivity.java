@@ -49,7 +49,7 @@ import static edu.cmu.pocketsphinx.SpeechRecognizerSetup.defaultSetup;
 
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public class MainActivity extends Activity implements
-        RecognitionListener {
+        RecognitionListener,Runnable {
     private static final long SCAN_PERIOD = 10000;
     private static final String KWS_SEARCH = "réveil";
     private static final String KEYPHRASE = "réveil";
@@ -114,7 +114,8 @@ public class MainActivity extends Activity implements
             System.err.println("service  finish");
             service = gatt.getService(UUID.fromString(FlowerPowerConstants.SERVICE_UUID_FLOWER_POWER));
             if (service != null) {
-
+                updateDeviceData=new UpdateDeviceData(context,service,gatt,listCharacteristicsView);
+                System.err.println("service "+service.getUuid().toString());
                mHandler.postDelayed(updateDeviceData, 1000);
             }
 
@@ -135,7 +136,7 @@ public class MainActivity extends Activity implements
     };
     private void initializeCharacteristicsToDisplay(){
        propertiesToDisplay =new ArrayList<>();
-       propertiesToDisplay.add(new Characteristiques("Température",FlowerPowerConstants.CHARACTERISTIC_UUID_TEMPERATURE,"0"));
+        propertiesToDisplay.add(new Characteristiques("Température",FlowerPowerConstants.CHARACTERISTIC_UUID_TEMPERATURE,"0"));
         propertiesToDisplay.add(new Characteristiques("Luminosité", FlowerPowerConstants.CHARACTERISTIC_UUID_SUNLIGHT,"0"));
         propertiesToDisplay.add( new Characteristiques("Humidité",FlowerPowerConstants.CHARACTERISTIC_UUID_SOIL_MOISTURE,"0"));
     }
@@ -348,6 +349,51 @@ public class MainActivity extends Activity implements
     }
 
 
+    @Override
+    public void run() {
+        while (true) {
+            try {
+                Thread.sleep(2000);
+                for (Characteristiques ch : MainActivity.propertiesToDisplay) {
+                    BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString(ch.getCharacteristic()));
+                    if (characteristic != null) {
+                        mGatt.readCharacteristic(characteristic);
+                        Thread.sleep(200);
+                        displayData(characteristic,ch);
+                    }
+
+                }
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    private void displayData(final BluetoothGattCharacteristic characteristic ,Characteristiques ch) {
+        switch (characteristic.getUuid().toString()) {
+            case FlowerPowerConstants.CHARACTERISTIC_UUID_TEMPERATURE:
+                int temperature = valueMapper.mapTemperature(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 0));
+                ch.setValue(temperature+"");
+                System.err.println("Temp " +ch.getValue());
+                break;
+            case FlowerPowerConstants.CHARACTERISTIC_UUID_SUNLIGHT:
+                double luminosite = valueMapper.mapSunlight(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 0));
+                ch.setValue(luminosite+"");
+                System.err.println("Display Sunlight" + ch.getValue());
+                break;
+            case FlowerPowerConstants.CHARACTERISTIC_UUID_SOIL_MOISTURE:
+
+                double humidite = valueMapper.mapSoilMoisture(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 0));
+                ch.setValue(humidite+"");
+                System.err.println("Display Soil Moisture " + ch.getValue());
+                break;
+            default:
+                break;
+
+        }
+        adapter.notifyDataSetChanged();
+        listCharacteristicsView.invalidate();
+    }
 }
 
 

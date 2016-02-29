@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
 import android.view.View;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.alyj.smartconfort.flowerAPI.FlowerPowerConstants;
@@ -26,61 +27,61 @@ public class UpdateDeviceData implements Runnable {
     private Context context;
     private BluetoothGattService service;
     private BluetoothGatt gatt;
-    private ValueMapper valueMapper;
+    private ValueMapper valueMapper ;
+    private ListView myView;
 
 
-    public UpdateDeviceData(Context context, BluetoothGattService service, BluetoothGatt gatt, View view) {
+    public UpdateDeviceData(Context context, BluetoothGattService service, BluetoothGatt gatt,ListView myView) {
         this.context = context;
         this.service = service;
         this.gatt = gatt;
-
+        this.myView=myView;
+        this.valueMapper=ValueMapper.getInstance(context);
     }
 
     @Override
     public void run() {
-        while (true) {
-            try {
-                Thread.sleep(2000);
+
                 for (Characteristiques ch : MainActivity.propertiesToDisplay) {
                     BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString(ch.getCharacteristic()));
                     if (characteristic != null) {
                         gatt.readCharacteristic(characteristic);
-                        //   Impossible de lire deux fois successivement, donc un sleep s'impose
-                        Thread.sleep(200);
+                        try {
+                            Thread.sleep(200);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                         displayData(characteristic,ch);
                     }
 
                 }
 
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+         
     }
 
     private void displayData(final BluetoothGattCharacteristic characteristic ,Characteristiques ch) {
-
         switch (characteristic.getUuid().toString()) {
             case FlowerPowerConstants.CHARACTERISTIC_UUID_TEMPERATURE:
               int temperature = valueMapper.mapTemperature(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 0));
                 ch.setValue(temperature+"");
-                System.err.println("Temp " +temperature);
+                System.err.println("Temp " +ch.getValue());
                 break;
             case FlowerPowerConstants.CHARACTERISTIC_UUID_SUNLIGHT:
                double luminosite = valueMapper.mapSunlight(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 0));
                 ch.setValue(luminosite+"");
-                System.err.println("Display Sunlight" + MainActivity.luminosite);
+                System.err.println("Display Sunlight" + ch.getValue());
                 break;
             case FlowerPowerConstants.CHARACTERISTIC_UUID_SOIL_MOISTURE:
 
                double humidite = valueMapper.mapSoilMoisture(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 0));
                 ch.setValue(humidite+"");
-                System.err.println("Display Soil Moisture " + humidite);
+                System.err.println("Display Soil Moisture " + ch.getValue());
                 break;
             default:
                 break;
 
         }
         MainActivity.adapter.notifyDataSetChanged();
+        myView.invalidate();
     }
 }
