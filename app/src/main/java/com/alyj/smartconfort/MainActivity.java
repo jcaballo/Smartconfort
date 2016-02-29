@@ -240,7 +240,7 @@ public class MainActivity extends Activity implements
                 .setRawLogDir(assetsDir)
 
                         // Threshold to tune for keyphrase to balance between false alarms and misses
-                .setKeywordThreshold(1e-45f)
+                .setKeywordThreshold(1e-30f)
 
                         // Use context-independent phonetic search, context-dependent is too slow for mobile
                 .setBoolean("-allphone_ci", true)
@@ -255,11 +255,11 @@ public class MainActivity extends Activity implements
         // Create keyword-activation search.
         recognizer.addKeyphraseSearch(KWS_SEARCH, KEYPHRASE);
 
-        // Create grammar-based search for selection between demos
+        // Create grammar-based search for selection
         File menuGrammar = new File(assetsDir, "menu.gram");
         recognizer.addGrammarSearch(MENU, menuGrammar);
 
-       // Create grammar-based search for selection between demos
+       // Create grammar-based search for numbers
         File digitsGrammar = new File(assetsDir, "digits.gram");
         recognizer.addGrammarSearch(MODIFICATION, digitsGrammar);
 
@@ -300,38 +300,42 @@ public class MainActivity extends Activity implements
         }
         String text = hypothesis.getHypstr();
 
-        if (text.equals(KEYPHRASE)) {
+        if (text.contains(KEYPHRASE)) {
             ((TextView) findViewById(R.id.textView1))
                     .setText("What ?");
             switchSearch(MENU);
-            return;
         }
-        else if(text.equals(TEMPERATURE) || text.equals(LUMINOSITE) || text.equals(HUMIDITE))
+        else if(text.contains(TEMPERATURE) || text.contains(LUMINOSITE) || text.contains(HUMIDITE))
         {
             enCours = text;
             ((TextView) findViewById(R.id.textView1))
                     .setText(text);
             switchSearch(MODIFICATION);
-            return;
         }
 
-        else {
-            if (enCours == TEMPERATURE) {
+
+       /* else {
+            if (enCours.equals(TEMPERATURE)) {
                 temperature = EnglishNumberToText.numberToText(text);
-                Toast toast = Toast.makeText(context, temperature, Toast.LENGTH_LONG);
-                toast.show();
-            } else if (enCours == LUMINOSITE) {
-                luminosite = EnglishNumberToText.numberToText(text);
-                Toast toast = Toast.makeText(context, String.valueOf(luminosite), Toast.LENGTH_LONG);
+                Toast toast = Toast.makeText(context, Integer.toString(temperature), Toast.LENGTH_LONG);
                 toast.show();
 
-            } else if (enCours == HUMIDITE) {
-                humidite = EnglishNumberToText.numberToText(text);
-                Toast toast = Toast.makeText(context, String.valueOf(humidite), Toast.LENGTH_LONG);
+            } else if (enCours.equals(LUMINOSITE)) {
+                luminosite = EnglishNumberToText.numberToText(text);
+                Toast toast = Toast.makeText(context, Double.toString(luminosite), Toast.LENGTH_LONG);
                 toast.show();
+
+
+            } else if (enCours.equals(HUMIDITE)) {
+                humidite = EnglishNumberToText.numberToText(text);
+                Toast toast = Toast.makeText(context, Double.toString(humidite), Toast.LENGTH_LONG);
+                toast.show();
+
             }
             enCours = "";
-        }
+            switchSearch(KWS_SEARCH);
+
+        }*/
     }
 
     @Override
@@ -341,6 +345,27 @@ public class MainActivity extends Activity implements
             return;
         }
         String text = hypothesis.getHypstr();
+        if(recognizer.getSearchName() == MODIFICATION) {
+            if (enCours.equals(TEMPERATURE)) {
+                temperature = EnglishNumberToText.numberToText(text);
+                Toast toast = Toast.makeText(context, Integer.toString(temperature), Toast.LENGTH_LONG);
+                toast.show();
+
+            } else if (enCours.equals(LUMINOSITE)) {
+                luminosite = EnglishNumberToText.numberToText(text);
+                Toast toast = Toast.makeText(context, Double.toString(luminosite), Toast.LENGTH_LONG);
+                toast.show();
+
+
+            } else if (enCours.equals(HUMIDITE)) {
+                humidite = EnglishNumberToText.numberToText(text);
+                Toast toast = Toast.makeText(context, Double.toString(humidite), Toast.LENGTH_LONG);
+                toast.show();
+
+            }
+            enCours = "";
+            switchSearch(KWS_SEARCH);
+        }
 
 
 
