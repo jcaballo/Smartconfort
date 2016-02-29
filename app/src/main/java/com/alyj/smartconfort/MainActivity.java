@@ -21,8 +21,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.speech.SpeechRecognizer;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -34,8 +37,18 @@ import com.alyj.smartconfort.flowerAPI.ValueMapper;
 import com.alyj.smartconfort.adapter.CharacteristicsAdapter;
 import com.alyj.smartconfort.model.Characteristiques;
 
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.BasicHttpEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -49,7 +62,7 @@ import static edu.cmu.pocketsphinx.SpeechRecognizerSetup.defaultSetup;
 
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public class MainActivity extends Activity implements
-        RecognitionListener,Runnable {
+        RecognitionListener,SwipeRefreshLayout.OnRefreshListener{
     private static final long SCAN_PERIOD = 10000;
     private static final String KWS_SEARCH = "réveil";
     private static final String KEYPHRASE = "réveil";
@@ -79,9 +92,15 @@ public class MainActivity extends Activity implements
     private Context context;
     private BluetoothGattService service;
     private ListView listCharacteristicsView;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
     public static CharacteristicsAdapter adapter;
     private UpdateDeviceData updateDeviceData;
-
+    private TextView currentCharacteristicValue;
+    /****
+     * Image Button
+     */
+    private ImageButton dropValue;
+    private ImageButton addValue;
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
@@ -114,9 +133,9 @@ public class MainActivity extends Activity implements
             System.err.println("service  finish");
             service = gatt.getService(UUID.fromString(FlowerPowerConstants.SERVICE_UUID_FLOWER_POWER));
             if (service != null) {
-                updateDeviceData=new UpdateDeviceData(context,service,gatt,listCharacteristicsView);
-                System.err.println("service "+service.getUuid().toString());
-               mHandler.postDelayed(updateDeviceData, 1000);
+//             onRefresh();
+                System.err.println("service found" + service.getUuid().toString());
+
             }
 
            /* BluetoothGattService service=gatt.getService(UUID.fromString(FlowerPowerConstants.SERVICE_UUID_BATTERY_LEVEL));
@@ -167,8 +186,50 @@ public class MainActivity extends Activity implements
         viewHeader = (View) getLayoutInflater().inflate(R.layout.activity_main, null);
         initializeCharacteristicsToDisplay();
         listCharacteristicsView=(ListView)findViewById(R.id.listCharacteristicView);
+        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.activity_main_swipe_refresh_layout);
+        mSwipeRefreshLayout.setOnRefreshListener(this);
+        dropValue=(ImageButton)findViewById(R.id.dropValue);
+        addValue=(ImageButton)findViewById(R.id.addValue);
+        currentCharacteristicValue=(TextView)findViewById(R.id.currentCharacteristicValue);
+        dropValue.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                
+                int line=listCharacteristicsView.getSelectedItemPosition();
+                if(line!=-1){
+                    HttpPost httppost = new HttpPost(" http://192.168.140.191/core/appliances/cb4a5ac3b4f7455f8ee05802d9a18de8/relay/");
+                    List<NameValuePair>params=new ArrayList<NameValuePair>();
+                    params.add(new BasicNameValuePair("state","on"));
+                    try {
+                        httppost.setEntity(new UrlEncodedFormEntity(params));
+                        HttpClient client=new DefaultHttpClient();
+                        client.execute(httppost);
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    } catch (ClientProtocolException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            }
+        });
+        addValue.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
         adapter=new CharacteristicsAdapter(this,propertiesToDisplay);
         listCharacteristicsView.setAdapter(adapter);
+        listCharacteristicsView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Characteristiques characteristique=propertiesToDisplay.get(position);
+                currentCharacteristicValue.setText(characteristique.getValue());
+            }
+        });
         new AsyncTask<Void, Void, Exception>() {
             @Override
             protected Exception doInBackground(Void... params) {
@@ -206,7 +267,11 @@ public class MainActivity extends Activity implements
         mBluetoothAdapter = bluetoothManager.getAdapter();
 
     }
-
+private void refreshData(){
+//    updateDeviceData=new UpdateDeviceData(context,service,gatt,listCharacteristicsView);
+//    mHandler.postDelayed(new UpdateDeviceData(context, service, mGatt, listCharacteristicsView));
+//    mSwipeRefreshLayout.setRefreshing(false);
+}
     private void scanLeDevice(final boolean enable) {
         if (enable) {
             mHandler.postDelayed(new Runnable() {
@@ -350,23 +415,20 @@ public class MainActivity extends Activity implements
 
 
     @Override
-    public void run() {
-        while (true) {
-            try {
-                Thread.sleep(2000);
-                for (Characteristiques ch : MainActivity.propertiesToDisplay) {
-                    BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString(ch.getCharacteristic()));
-                    if (characteristic != null) {
-                        mGatt.readCharacteristic(characteristic);
-                        Thread.sleep(200);
-                        displayData(characteristic,ch);
-                    }
-
+    public void onRefresh() {
+        System.err.println("swipe ");
+        for (Characteristiques ch : MainActivity.propertiesToDisplay) {
+            BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString(ch.getCharacteristic()));
+            if (characteristic != null) {
+                mGatt.readCharacteristic(characteristic);
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                displayData(characteristic,ch);
             }
+
         }
     }
     private void displayData(final BluetoothGattCharacteristic characteristic ,Characteristiques ch) {
@@ -391,8 +453,9 @@ public class MainActivity extends Activity implements
                 break;
 
         }
-        adapter.notifyDataSetChanged();
+        MainActivity.adapter.notifyDataSetChanged();
         listCharacteristicsView.invalidate();
+        mSwipeRefreshLayout.setRefreshing(false);
     }
 }
 

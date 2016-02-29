@@ -14,7 +14,10 @@
         android:layout_height="300dp"
         android:layout_weight="1"
         android:orientation="vertical">
-
+        <android.support.v4.widget.SwipeRefreshLayout
+            android:id="@+id/activity_main_swipe_refresh_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
         <ListView
             android:layout_width="match_parent"
@@ -24,7 +27,7 @@
 
 
         </ListView>
-
+        </android.support.v4.widget.SwipeRefreshLayout>
 
     </LinearLayout>
 
@@ -43,12 +46,35 @@
             android:layout_gravity="center"
             android:layout_marginTop="47dp"
             android:text="Ok SmartConfort Réveil toi!" />
+        <RelativeLayout
+            android:layout_width="fill_parent"
+
+            android:layout_height="fill_parent">
+            <ImageButton
+                android:id="@+id/addValue"
+                android:layout_width="200dp"
+                android:background="@mipmap/minus"
+                android:layout_height="fill_parent"
+                android:layout_toLeftOf="@+id/currentCharacteristicValue"
+                />
+            <TextView
+                android:gravity="center"
+                android:text="10"
+                android:textStyle="bold"
+                android:id="@+id/currentCharacteristicValue"
+                android:layout_width="100dp"
+                android:layout_centerHorizontal="true"
+                android:layout_height="fill_parent"
+                />
+            <ImageButton
+                android:id="@+id/dropValue"
+        android:layout_toRightOf="@+id/currentCharacteristicValue"
+                android:layout_width="200dp"
+                android:background="@mipmap/plus"
+                android:layout_height="fill_parent" />
+
+        </RelativeLayout>
 
 
-        <ImageButton
-            android:layout_width="130dp"
-            android:layout_height="fill_parent"
-            android:layout_gravity="center"
-            android:background="@mipmap/ball" />
     </LinearLayout>
 </LinearLayout>
