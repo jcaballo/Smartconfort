@@ -8,10 +8,10 @@ import java.util.List;
  */
 public class EnglishNumberToText {
 
-    public static long numberToText(String input) {
+    public static int numberToText(String input) {
         boolean isValidInput = true;
-        long result = 0;
-        long finalResult = 0;
+        int result = 0;
+        int finalResult = 0;
         List<String> allowedStrings = Arrays.asList
                 (
                         "zero", "one", "two", "three", "four", "five", "six", "seven",

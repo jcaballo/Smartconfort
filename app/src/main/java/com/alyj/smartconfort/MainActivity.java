@@ -36,6 +36,7 @@ import com.alyj.smartconfort.flowerAPI.FlowerPowerConstants;
 import com.alyj.smartconfort.flowerAPI.ValueMapper;
 import com.alyj.smartconfort.adapter.CharacteristicsAdapter;
 import com.alyj.smartconfort.model.Characteristiques;
+import com.alyj.smartconfort.model.EnglishNumberToText;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
@@ -64,9 +65,14 @@ import static edu.cmu.pocketsphinx.SpeechRecognizerSetup.defaultSetup;
 public class MainActivity extends Activity implements
         RecognitionListener,SwipeRefreshLayout.OnRefreshListener{
     private static final long SCAN_PERIOD = 10000;
-    private static final String KWS_SEARCH = "réveil";
-    private static final String KEYPHRASE = "réveil";
+    private static final String KWS_SEARCH = "wake";
+    private static final String KEYPHRASE = "wake up";
     private static final String MENU = "principal";
+    private static final String MODIFICATION = "modification";
+    private static final String TEMPERATURE = "temperature";
+    private static final String LUMINOSITE = "brightness";
+    private static final String HUMIDITE = "humidity";
+    private String enCours = "";
     public static boolean INUSE = false;
     public static int temperature;
     public static double luminosite;
@@ -292,14 +298,14 @@ private void refreshData(){
         // of different kind and switch between them
 
         recognizer = defaultSetup()
-                .setAcousticModel(new File(assetsDir, "fr-ptm"))
-                .setDictionary(new File(assetsDir, "fr.dict"))
+                .setAcousticModel(new File(assetsDir, "en-us-ptm"))
+                .setDictionary(new File(assetsDir, "cmudict-en-us.dict"))
 
                         // To disable logging of raw audio comment out this call (takes a lot of space on the device)
                 .setRawLogDir(assetsDir)
 
                         // Threshold to tune for keyphrase to balance between false alarms and misses
-                .setKeywordThreshold(1e-10f)
+                .setKeywordThreshold(1e-30f)
 
                         // Use context-independent phonetic search, context-dependent is too slow for mobile
                 .setBoolean("-allphone_ci", true)
@@ -314,9 +320,14 @@ private void refreshData(){
         // Create keyword-activation search.
         recognizer.addKeyphraseSearch(KWS_SEARCH, KEYPHRASE);
 
-        // Create grammar-based search for selection between demos
-        File menuGrammar = new File(assetsDir, "nombres.gram");
+        // Create grammar-based search for selection
+        File menuGrammar = new File(assetsDir, "menu.gram");
         recognizer.addGrammarSearch(MENU, menuGrammar);
+
+       // Create grammar-based search for numbers
+        File digitsGrammar = new File(assetsDir, "digits.gram");
+        recognizer.addGrammarSearch(MODIFICATION, digitsGrammar);
+
 
     }
 
@@ -324,41 +335,105 @@ private void refreshData(){
         recognizer.stop();
 
         // If we are not spotting, start listening with timeout (10000 ms or 10 seconds).
-        if (searchName.equals(KWS_SEARCH))
+
+        if (searchName.equals(KWS_SEARCH)) {
+            ((TextView) findViewById(R.id.textView1)).setText(R.string.speech_prompt);
             recognizer.startListening(searchName);
+        }
         else
             recognizer.startListening(searchName, 10000);
 
-        String caption = getResources().getString(R.string.speech_prompt);
-        ((TextView) findViewById(R.id.textView1)).setText(R.string.speech_prompt);
     }
 
     @Override
     public void onBeginningOfSpeech() {
-        ((TextView) findViewById(R.id.textView1))
-                .setText("Speech beginning !");
+
     }
 
     @Override
     public void onEndOfSpeech() {
-        ((TextView) findViewById(R.id.textView1))
-                .setText("Speech ended !");
+        if (!recognizer.getSearchName().equals(KWS_SEARCH)) {
+            ((TextView) findViewById(R.id.textView1)).setText(R.string.speech_prompt);
+            switchSearch(KWS_SEARCH);
+        }
     }
 
     @Override
     public void onPartialResult(Hypothesis hypothesis) {
         if (hypothesis == null) {
+            return;
+        }
+        String text = hypothesis.getHypstr();
+
+        if (text.contains(KEYPHRASE)) {
             ((TextView) findViewById(R.id.textView1))
-                    .setText("null");
-        } else
+                    .setText("What ?");
+            switchSearch(MENU);
+        }
+        else if(text.contains(TEMPERATURE) || text.contains(LUMINOSITE) || text.contains(HUMIDITE))
+        {
+            enCours = text;
             ((TextView) findViewById(R.id.textView1))
-                    .setText(hypothesis.getHypstr());
+                    .setText(text);
+            switchSearch(MODIFICATION);
+        }
+
+
+       /* else {
+            if (enCours.equals(TEMPERATURE)) {
+                temperature = EnglishNumberToText.numberToText(text);
+                Toast toast = Toast.makeText(context, Integer.toString(temperature), Toast.LENGTH_LONG);
+                toast.show();
+
+            } else if (enCours.equals(LUMINOSITE)) {
+                luminosite = EnglishNumberToText.numberToText(text);
+                Toast toast = Toast.makeText(context, Double.toString(luminosite), Toast.LENGTH_LONG);
+                toast.show();
+
+
+            } else if (enCours.equals(HUMIDITE)) {
+                humidite = EnglishNumberToText.numberToText(text);
+                Toast toast = Toast.makeText(context, Double.toString(humidite), Toast.LENGTH_LONG);
+                toast.show();
+
+            }
+            enCours = "";
+            switchSearch(KWS_SEARCH);
+
+        }*/
     }
 
     @Override
     public void onResult(Hypothesis hypothesis) {
-        ((TextView) findViewById(R.id.textView1))
-                .setText(hypothesis.toString());
+
+        if (hypothesis == null) {
+            return;
+        }
+        String text = hypothesis.getHypstr();
+        if(recognizer.getSearchName() == MODIFICATION) {
+            if (enCours.equals(TEMPERATURE)) {
+                temperature = EnglishNumberToText.numberToText(text);
+                Toast toast = Toast.makeText(context, Integer.toString(temperature), Toast.LENGTH_LONG);
+                toast.show();
+
+            } else if (enCours.equals(LUMINOSITE)) {
+                luminosite = EnglishNumberToText.numberToText(text);
+                Toast toast = Toast.makeText(context, Double.toString(luminosite), Toast.LENGTH_LONG);
+                toast.show();
+
+
+            } else if (enCours.equals(HUMIDITE)) {
+                humidite = EnglishNumberToText.numberToText(text);
+                Toast toast = Toast.makeText(context, Double.toString(humidite), Toast.LENGTH_LONG);
+                toast.show();
+
+            }
+            enCours = "";
+            switchSearch(KWS_SEARCH);
+        }
+
+
+
     }
 
     @Override
@@ -404,6 +479,9 @@ private void refreshData(){
         mGatt.close();
         mGatt = null;
         super.onDestroy();
+        recognizer.cancel();
+        recognizer.shutdown();
+
     }
 
     public void connectToDevice(BluetoothDevice device) {
