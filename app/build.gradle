@@ -6,11 +6,11 @@ clean.dependsOn(clean_assets)
 
 android {
     compileSdkVersion 21
-    buildToolsVersion "21.1.0"
+    buildToolsVersion "23.0.1"
 
     defaultConfig {
         applicationId "com.alyj.smartconfort"
-        minSdkVersion 18
+        minSdkVersion 19
         targetSdkVersion 21
         versionCode 1
         versionName "1.0"
@@ -27,5 +27,4 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:21.0.3'
-    compile 'com.google.android.gms:play-services-appindexing:8.1.0'
 }

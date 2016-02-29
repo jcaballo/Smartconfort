@@ -10,6 +10,9 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanFilter;
+import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -17,18 +20,24 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.speech.SpeechRecognizer;
 import android.util.Log;
+import android.view.View;
+import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.alyj.smartconfort.flowerAPI.FlowerPowerConstants;
 import com.alyj.smartconfort.flowerAPI.ValueMapper;
-import com.alyj.smartconfort.model.EnglishNumberToText;
+import com.alyj.smartconfort.adapter.CharacteristicsAdapter;
+import com.alyj.smartconfort.model.Characteristiques;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,35 +50,45 @@ import static edu.cmu.pocketsphinx.SpeechRecognizerSetup.defaultSetup;
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public class MainActivity extends Activity implements
         RecognitionListener {
-
     private static final long SCAN_PERIOD = 10000;
-    private static final String KWS_SEARCH = "wakeup";
-    private static final String KEYPHRASE = "wake up";
-    private static final String MENU_SEARCH = "menu";
-    private static final String TEMPERATURE = "temperature";
-    private static final String BRIGHTNESS = "brightness";
-    private static final String HUMIDITY = "humidity";
+    private static final String KWS_SEARCH = "réveil";
+    private static final String KEYPHRASE = "réveil";
+    private static final String MENU = "principal";
     public static boolean INUSE = false;
+    public static int temperature;
+    public static double luminosite;
+    public static double humidite;
     ValueMapper valueMapper;
-    private String inUse = "";
-    private long number = 0;
+    View viewHeader;
     private BluetoothAdapter mBluetoothAdapter;
     private Handler mHandler;
+    private BluetoothLeScanner mLEScanner;
+    private ScanSettings settings;
+    private List<ScanFilter> filters;
     private BluetoothGatt mGatt;
     private int REQUEST_ENABLE_BT = 1;
     private BluetoothManager bluetoothManager;
-    private TextView txtTemperature;
-    private TextView txtLuminosite;
-    private TextView txtHumidite;
+    public static List<Characteristiques> propertiesToDisplay ;
+    private TextView returnedText;
+    private ToggleButton toggleButton;
+    private ProgressBar progressBar;
+    private SpeechRecognizer speech = null;
+    private Intent recognizerIntent;
+    private String LOG_TAG = "VoiceRecognitionActivity";
     private edu.cmu.pocketsphinx.SpeechRecognizer recognizer;
+    private Context context;
     private BluetoothGattService service;
+    private ListView listCharacteristicsView;
+    public static CharacteristicsAdapter adapter;
+    private UpdateDeviceData updateDeviceData;
+
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             Log.i("onConnectionStateChange", "Status: " + status);
             switch (newState) {
                 case BluetoothProfile.STATE_CONNECTED:
-                    Log.i("gattCallback", "STATE_CONNECTED");
+                    System.err.println("Connected ");
                     gatt.discoverServices();
                     try {
                         Thread.sleep(2000);
@@ -81,7 +100,7 @@ public class MainActivity extends Activity implements
                     if (INUSE) {
                         gatt.connect();
                     }
-                    Log.e("gattCallback", "STATE_DISCONNECTED");
+                    System.err.println("Disconnected");
                     break;
                 default:
                     Log.e("gattCallback", "STATE_OTHER");
@@ -92,33 +111,16 @@ public class MainActivity extends Activity implements
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             List<BluetoothGattService> services = gatt.getServices();
-            Log.i("onServicesDiscovered", services.toString());
+            System.err.println("service  finish");
             service = gatt.getService(UUID.fromString(FlowerPowerConstants.SERVICE_UUID_FLOWER_POWER));
+            if (service != null) {
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    /** Pour une mis à jour automatique,  on tourne en boucle **/
-                    while (true) {
-                        try {
-                            Thread.sleep(2000);
-                         System.err.println("service "+service.getUuid());
-                            /*for (String property : propertiesToDisplay) {
-                                BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID.fromString(property));
-                                if (characteristic != null){
-                                    mGatt.readCharacteristic(characteristic);
-                                    *//** Impossible de lire deux fois successivement, donc un sleep s'impose **//*
-                                    Thread.sleep(200);
-                                }
+               mHandler.postDelayed(updateDeviceData, 1000);
+            }
 
-                            }*/
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            });
-
+           /* BluetoothGattService service=gatt.getService(UUID.fromString(FlowerPowerConstants.SERVICE_UUID_BATTERY_LEVEL));
+            BluetoothGattCharacteristic characteristic=service.getCharacteristic(UUID.fromString(FlowerPowerConstants.CHARACTERISTIC_UUID_BATTERY_LEVEL));
+            gatt.readCharacteristic(characteristic);*/
         }
 
 
@@ -126,25 +128,17 @@ public class MainActivity extends Activity implements
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic
                                                  characteristic, int status) {
-            switch (characteristic.getUuid().toString()) {
-                case FlowerPowerConstants.CHARACTERISTIC_UUID_TEMPERATURE:
-                    txtTemperature.setText("" + valueMapper.mapTemperature(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 0)));
-                    break;
-                case FlowerPowerConstants.CHARACTERISTIC_UUID_SUNLIGHT:
-                    txtLuminosite.setText("" + valueMapper.mapSunlight(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 0)));
-                    break;
-                case FlowerPowerConstants.CHARACTERISTIC_UUID_SOIL_MOISTURE:
-                    txtHumidite.setText("" + valueMapper.mapSoilMoisture(characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16, 0)));
-                    break;
-                default:
-                    break;
 
-            }
             Log.i("onCharacteristicRead", Arrays.toString(characteristic.getValue()));
 
         }
     };
-    private HashMap<String, Integer> captions;
+    private void initializeCharacteristicsToDisplay(){
+       propertiesToDisplay =new ArrayList<>();
+       propertiesToDisplay.add(new Characteristiques("Température",FlowerPowerConstants.CHARACTERISTIC_UUID_TEMPERATURE,"0"));
+        propertiesToDisplay.add(new Characteristiques("Luminosité", FlowerPowerConstants.CHARACTERISTIC_UUID_SUNLIGHT,"0"));
+        propertiesToDisplay.add( new Characteristiques("Humidité",FlowerPowerConstants.CHARACTERISTIC_UUID_SOIL_MOISTURE,"0"));
+    }
     private BluetoothAdapter.LeScanCallback LeOldScanner =
             new BluetoothAdapter.LeScanCallback() {
                 @Override
@@ -154,8 +148,8 @@ public class MainActivity extends Activity implements
                         @Override
                         public void run() {
 
-                            if (device.getName()!=null && device.getName().equalsIgnoreCase("Flower power AAB2")) {
-                                Log.i("FOund ", device.getName());
+                            if (device.getName() != null && device.getName().equalsIgnoreCase("Flower power AAB2")) {
+                                System.err.println("found " + device.getName());
                                 connectToDevice(device);
                             }
 
@@ -169,13 +163,11 @@ public class MainActivity extends Activity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        captions = new HashMap<String, Integer>();
-        captions.put(KWS_SEARCH, R.string.keyphrase);
-        captions.put(MENU_SEARCH, R.string.menu_caption);
-        captions.put(TEMPERATURE, R.string.temperature);
-
-        ((TextView) findViewById(R.id.textView1))
-                .setText("Préparation de la reconaissance vocale");
+        viewHeader = (View) getLayoutInflater().inflate(R.layout.activity_main, null);
+        initializeCharacteristicsToDisplay();
+        listCharacteristicsView=(ListView)findViewById(R.id.listCharacteristicView);
+        adapter=new CharacteristicsAdapter(this,propertiesToDisplay);
+        listCharacteristicsView.setAdapter(adapter);
         new AsyncTask<Void, Void, Exception>() {
             @Override
             protected Exception doInBackground(Void... params) {
@@ -202,14 +194,13 @@ public class MainActivity extends Activity implements
 
 
         mHandler = new Handler();
+        context = this.getApplicationContext();
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
             Toast.makeText(this, "BLE Not Supported",
                     Toast.LENGTH_SHORT).show();
             finish();
         }
-        txtTemperature = (TextView) findViewById(R.id.txtTemperature);
-        txtLuminosite = (TextView) findViewById(R.id.txtLuminosite);
-        txtHumidite = (TextView) findViewById(R.id.txtHumidite);
+
         bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = bluetoothManager.getAdapter();
 
@@ -220,12 +211,13 @@ public class MainActivity extends Activity implements
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                        mBluetoothAdapter.stopLeScan(LeOldScanner);
+                    mBluetoothAdapter.stopLeScan(LeOldScanner);
                 }
             }, SCAN_PERIOD);
-                mBluetoothAdapter.startLeScan(LeOldScanner);
+            mBluetoothAdapter.startLeScan(LeOldScanner);
+
         } else {
-                mBluetoothAdapter.stopLeScan(LeOldScanner);
+            mBluetoothAdapter.stopLeScan(LeOldScanner);
         }
     }
 
@@ -234,14 +226,14 @@ public class MainActivity extends Activity implements
         // of different kind and switch between them
 
         recognizer = defaultSetup()
-                .setAcousticModel(new File(assetsDir, "en-us-ptm"))
-                .setDictionary(new File(assetsDir, "cmudict-en-us.dict"))
+                .setAcousticModel(new File(assetsDir, "fr-ptm"))
+                .setDictionary(new File(assetsDir, "fr.dict"))
 
                         // To disable logging of raw audio comment out this call (takes a lot of space on the device)
                 .setRawLogDir(assetsDir)
 
                         // Threshold to tune for keyphrase to balance between false alarms and misses
-                .setKeywordThreshold(1e-32f)
+                .setKeywordThreshold(1e-10f)
 
                         // Use context-independent phonetic search, context-dependent is too slow for mobile
                 .setBoolean("-allphone_ci", true)
@@ -257,15 +249,8 @@ public class MainActivity extends Activity implements
         recognizer.addKeyphraseSearch(KWS_SEARCH, KEYPHRASE);
 
         // Create grammar-based search for selection between demos
-        File menuGrammar = new File(assetsDir, "menu.gram");
-        recognizer.addGrammarSearch(MENU_SEARCH, menuGrammar);
-
-        File digitsGrammar = new File(assetsDir, "digits.gram");
-        recognizer.addGrammarSearch(TEMPERATURE, digitsGrammar);
-
-        recognizer.addGrammarSearch(HUMIDITY, digitsGrammar);
-
-        recognizer.addGrammarSearch(BRIGHTNESS, digitsGrammar);
+        File menuGrammar = new File(assetsDir, "nombres.gram");
+        recognizer.addGrammarSearch(MENU, menuGrammar);
 
     }
 
@@ -278,65 +263,36 @@ public class MainActivity extends Activity implements
         else
             recognizer.startListening(searchName, 10000);
 
-        String caption = getResources().getString(captions.get(searchName));
-        ((TextView) findViewById(R.id.textView1)).setText(caption);
+        String caption = getResources().getString(R.string.speech_prompt);
+        ((TextView) findViewById(R.id.textView1)).setText(R.string.speech_prompt);
     }
 
     @Override
     public void onBeginningOfSpeech() {
-
+        ((TextView) findViewById(R.id.textView1))
+                .setText("Speech beginning !");
     }
 
     @Override
     public void onEndOfSpeech() {
-        if (!recognizer.getSearchName().equals(KWS_SEARCH))
-            switchSearch(KWS_SEARCH);
-
+        ((TextView) findViewById(R.id.textView1))
+                .setText("Speech ended !");
     }
 
     @Override
     public void onPartialResult(Hypothesis hypothesis) {
-        if (hypothesis == null)
-            return;
-        String text = hypothesis.getHypstr();
-        if (text.equals(KEYPHRASE))
-            switchSearch(MENU_SEARCH);
-        else if (text.equals(TEMPERATURE)) {
-            inUse = TEMPERATURE;
-            switchSearch(TEMPERATURE);
-        } else if (text.equals(BRIGHTNESS)) {
-            inUse = BRIGHTNESS;
-            switchSearch(BRIGHTNESS);
-        } else if (text.equals(HUMIDITY)) {
-            inUse = HUMIDITY;
-            switchSearch(HUMIDITY);
-        } else {
-            ((TextView) findViewById(R.id.resultText)).setText(text);
-        }
+        if (hypothesis == null) {
+            ((TextView) findViewById(R.id.textView1))
+                    .setText("null");
+        } else
+            ((TextView) findViewById(R.id.textView1))
+                    .setText(hypothesis.getHypstr());
     }
 
     @Override
     public void onResult(Hypothesis hypothesis) {
-        ((TextView) findViewById(R.id.textView1)).setText("");
-        if (hypothesis == null) {
-            return;
-        }
-        String text = hypothesis.getHypstr();
-        if (text.equals(KEYPHRASE))
-            switchSearch(MENU_SEARCH);
-        else if (text.equals(TEMPERATURE)) {
-            inUse = TEMPERATURE;
-            switchSearch(TEMPERATURE);
-        } else if (text.equals(BRIGHTNESS)) {
-            inUse = BRIGHTNESS;
-            switchSearch(BRIGHTNESS);
-        } else if (text.equals(HUMIDITY)) {
-            inUse = HUMIDITY;
-            switchSearch(HUMIDITY);
-        } else {
-            number = EnglishNumberToText.numberToText(text);
-            ((TextView) findViewById(R.id.resultText)).setText((int) number);
-        }
+        ((TextView) findViewById(R.id.textView1))
+                .setText(hypothesis.toString());
     }
 
     @Override
@@ -347,7 +303,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onTimeout() {
-        switchSearch(KWS_SEARCH);
+
     }
 
     @Override
@@ -358,8 +314,9 @@ public class MainActivity extends Activity implements
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        } else {
 
+        } else {
+//mBluetoothAdapter.startDiscovery();
             scanLeDevice(true);
         }
     }
@@ -381,13 +338,11 @@ public class MainActivity extends Activity implements
         mGatt.close();
         mGatt = null;
         super.onDestroy();
-        recognizer.cancel();
-        recognizer.shutdown();
     }
 
     public void connectToDevice(BluetoothDevice device) {
         if (mGatt == null) {
-            mGatt = device.connectGatt(this, false, gattCallback);
+            mGatt = device.connectGatt(this, true, gattCallback);
             scanLeDevice(false);
         }
     }
