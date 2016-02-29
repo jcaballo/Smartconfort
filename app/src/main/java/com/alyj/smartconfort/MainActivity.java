@@ -51,8 +51,8 @@ import static edu.cmu.pocketsphinx.SpeechRecognizerSetup.defaultSetup;
 public class MainActivity extends Activity implements
         RecognitionListener {
     private static final long SCAN_PERIOD = 10000;
-    private static final String KWS_SEARCH = "réveil";
-    private static final String KEYPHRASE = "réveil";
+    private static final String KWS_SEARCH = "wake";
+    private static final String KEYPHRASE = "wake up";
     private static final String MENU = "principal";
     public static boolean INUSE = false;
     public static int temperature;
@@ -226,14 +226,14 @@ public class MainActivity extends Activity implements
         // of different kind and switch between them
 
         recognizer = defaultSetup()
-                .setAcousticModel(new File(assetsDir, "fr-ptm"))
-                .setDictionary(new File(assetsDir, "fr.dict"))
+                .setAcousticModel(new File(assetsDir, "en-us-ptm"))
+                .setDictionary(new File(assetsDir, "cmudict-en-us.dict"))
 
                         // To disable logging of raw audio comment out this call (takes a lot of space on the device)
                 .setRawLogDir(assetsDir)
 
                         // Threshold to tune for keyphrase to balance between false alarms and misses
-                .setKeywordThreshold(1e-10f)
+                .setKeywordThreshold(1e-45f)
 
                         // Use context-independent phonetic search, context-dependent is too slow for mobile
                 .setBoolean("-allphone_ci", true)
@@ -249,8 +249,13 @@ public class MainActivity extends Activity implements
         recognizer.addKeyphraseSearch(KWS_SEARCH, KEYPHRASE);
 
         // Create grammar-based search for selection between demos
-        File menuGrammar = new File(assetsDir, "nombres.gram");
+        File menuGrammar = new File(assetsDir, "menu.gram");
         recognizer.addGrammarSearch(MENU, menuGrammar);
+
+       /* // Create grammar-based search for selection between demos
+        File digitsGrammar = new File(assetsDir, "digits.gram");
+        recognizer.addGrammarSearch(, menuGrammar);*/
+
 
     }
 
@@ -259,11 +264,10 @@ public class MainActivity extends Activity implements
 
         // If we are not spotting, start listening with timeout (10000 ms or 10 seconds).
         if (searchName.equals(KWS_SEARCH))
-            recognizer.startListening(searchName);
-        else
             recognizer.startListening(searchName, 10000);
+        else
+            recognizer.startListening(searchName, 3000);
 
-        String caption = getResources().getString(R.string.speech_prompt);
         ((TextView) findViewById(R.id.textView1)).setText(R.string.speech_prompt);
     }
 
@@ -284,15 +288,26 @@ public class MainActivity extends Activity implements
         if (hypothesis == null) {
             ((TextView) findViewById(R.id.textView1))
                     .setText("null");
-        } else
+            return;
+        }
+        String text = hypothesis.getHypstr();
+
+        if (text.equals(KEYPHRASE)) {
             ((TextView) findViewById(R.id.textView1))
-                    .setText(hypothesis.getHypstr());
+                    .setText("What ?");
+            switchSearch(MENU);
+            return;
+        }
     }
 
     @Override
     public void onResult(Hypothesis hypothesis) {
+
+        String text = hypothesis.getHypstr();
+
         ((TextView) findViewById(R.id.textView1))
-                .setText(hypothesis.toString());
+                .setText(text);
+
     }
 
     @Override

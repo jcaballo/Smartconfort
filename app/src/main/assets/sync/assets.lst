@@ -9,16 +9,4 @@ en-us-ptm/noisedict
 en-us-ptm/sendump
 en-us-ptm/transition_matrices
 en-us-ptm/variances
-fr-phone.lm.dmp
-fr-ptm/README
-fr-ptm/feat.params
-fr-ptm/mdef
-fr-ptm/means
-fr-ptm/mixture_weights
-fr-ptm/noisedict
-fr-ptm/sendump
-fr-ptm/transition_matrices
-fr-ptm/variances
-fr.dict
 menu.gram
-nombres.gram
