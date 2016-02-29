@@ -33,6 +33,7 @@ import com.alyj.smartconfort.flowerAPI.FlowerPowerConstants;
 import com.alyj.smartconfort.flowerAPI.ValueMapper;
 import com.alyj.smartconfort.adapter.CharacteristicsAdapter;
 import com.alyj.smartconfort.model.Characteristiques;
+import com.alyj.smartconfort.model.EnglishNumberToText;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,9 +52,14 @@ import static edu.cmu.pocketsphinx.SpeechRecognizerSetup.defaultSetup;
 public class MainActivity extends Activity implements
         RecognitionListener,Runnable {
     private static final long SCAN_PERIOD = 10000;
-    private static final String KWS_SEARCH = "réveil";
-    private static final String KEYPHRASE = "réveil";
+    private static final String KWS_SEARCH = "wake";
+    private static final String KEYPHRASE = "wake up";
     private static final String MENU = "principal";
+    private static final String MODIFICATION = "modification";
+    private static final String TEMPERATURE = "temperature";
+    private static final String LUMINOSITE = "brightness";
+    private static final String HUMIDITE = "humidity";
+    private String enCours = "";
     public static boolean INUSE = false;
     public static int temperature;
     public static double luminosite;
@@ -227,14 +233,14 @@ public class MainActivity extends Activity implements
         // of different kind and switch between them
 
         recognizer = defaultSetup()
-                .setAcousticModel(new File(assetsDir, "fr-ptm"))
-                .setDictionary(new File(assetsDir, "fr.dict"))
+                .setAcousticModel(new File(assetsDir, "en-us-ptm"))
+                .setDictionary(new File(assetsDir, "cmudict-en-us.dict"))
 
                         // To disable logging of raw audio comment out this call (takes a lot of space on the device)
                 .setRawLogDir(assetsDir)
 
                         // Threshold to tune for keyphrase to balance between false alarms and misses
-                .setKeywordThreshold(1e-10f)
+                .setKeywordThreshold(1e-45f)
 
                         // Use context-independent phonetic search, context-dependent is too slow for mobile
                 .setBoolean("-allphone_ci", true)
@@ -250,8 +256,13 @@ public class MainActivity extends Activity implements
         recognizer.addKeyphraseSearch(KWS_SEARCH, KEYPHRASE);
 
         // Create grammar-based search for selection between demos
-        File menuGrammar = new File(assetsDir, "nombres.gram");
+        File menuGrammar = new File(assetsDir, "menu.gram");
         recognizer.addGrammarSearch(MENU, menuGrammar);
+
+       // Create grammar-based search for selection between demos
+        File digitsGrammar = new File(assetsDir, "digits.gram");
+        recognizer.addGrammarSearch(MODIFICATION, digitsGrammar);
+
 
     }
 
@@ -260,24 +271,24 @@ public class MainActivity extends Activity implements
 
         // If we are not spotting, start listening with timeout (10000 ms or 10 seconds).
         if (searchName.equals(KWS_SEARCH))
-            recognizer.startListening(searchName);
-        else
             recognizer.startListening(searchName, 10000);
+        else
+            recognizer.startListening(searchName, 3000);
 
-        String caption = getResources().getString(R.string.speech_prompt);
         ((TextView) findViewById(R.id.textView1)).setText(R.string.speech_prompt);
     }
 
     @Override
     public void onBeginningOfSpeech() {
-        ((TextView) findViewById(R.id.textView1))
-                .setText("Speech beginning !");
+
     }
 
     @Override
     public void onEndOfSpeech() {
-        ((TextView) findViewById(R.id.textView1))
-                .setText("Speech ended !");
+        if (!recognizer.getSearchName().equals(KWS_SEARCH)) {
+            ((TextView) findViewById(R.id.textView1)).setText(R.string.speech_prompt);
+            switchSearch(KWS_SEARCH);
+        }
     }
 
     @Override
@@ -285,15 +296,26 @@ public class MainActivity extends Activity implements
         if (hypothesis == null) {
             ((TextView) findViewById(R.id.textView1))
                     .setText("null");
-        } else
+            return;
+        }
+        String text = hypothesis.getHypstr();
+
+        if (text.equals(KEYPHRASE)) {
             ((TextView) findViewById(R.id.textView1))
-                    .setText(hypothesis.getHypstr());
+                    .setText("What ?");
+            switchSearch(MENU);
+            return;
+        }
     }
 
     @Override
     public void onResult(Hypothesis hypothesis) {
+
+        String text = hypothesis.getHypstr();
+
         ((TextView) findViewById(R.id.textView1))
-                .setText(hypothesis.toString());
+                .setText(text);
+
     }
 
     @Override
@@ -339,6 +361,9 @@ public class MainActivity extends Activity implements
         mGatt.close();
         mGatt = null;
         super.onDestroy();
+        recognizer.cancel();
+        recognizer.shutdown();
+
     }
 
     public void connectToDevice(BluetoothDevice device) {
