@@ -270,12 +270,14 @@ public class MainActivity extends Activity implements
         recognizer.stop();
 
         // If we are not spotting, start listening with timeout (10000 ms or 10 seconds).
-        if (searchName.equals(KWS_SEARCH))
-            recognizer.startListening(searchName, 10000);
-        else
-            recognizer.startListening(searchName, 3000);
 
-        ((TextView) findViewById(R.id.textView1)).setText(R.string.speech_prompt);
+        if (searchName.equals(KWS_SEARCH)) {
+            ((TextView) findViewById(R.id.textView1)).setText(R.string.speech_prompt);
+            recognizer.startListening(searchName);
+        }
+        else
+            recognizer.startListening(searchName, 10000);
+
     }
 
     @Override
@@ -294,8 +296,6 @@ public class MainActivity extends Activity implements
     @Override
     public void onPartialResult(Hypothesis hypothesis) {
         if (hypothesis == null) {
-            ((TextView) findViewById(R.id.textView1))
-                    .setText("null");
             return;
         }
         String text = hypothesis.getHypstr();
@@ -306,15 +306,43 @@ public class MainActivity extends Activity implements
             switchSearch(MENU);
             return;
         }
+        else if(text.equals(TEMPERATURE) || text.equals(LUMINOSITE) || text.equals(HUMIDITE))
+        {
+            enCours = text;
+            ((TextView) findViewById(R.id.textView1))
+                    .setText(text);
+            switchSearch(MODIFICATION);
+            return;
+        }
+
+        else {
+            if (enCours == TEMPERATURE) {
+                temperature = EnglishNumberToText.numberToText(text);
+                Toast toast = Toast.makeText(context, temperature, Toast.LENGTH_LONG);
+                toast.show();
+            } else if (enCours == LUMINOSITE) {
+                luminosite = EnglishNumberToText.numberToText(text);
+                Toast toast = Toast.makeText(context, String.valueOf(luminosite), Toast.LENGTH_LONG);
+                toast.show();
+
+            } else if (enCours == HUMIDITE) {
+                humidite = EnglishNumberToText.numberToText(text);
+                Toast toast = Toast.makeText(context, String.valueOf(humidite), Toast.LENGTH_LONG);
+                toast.show();
+            }
+            enCours = "";
+        }
     }
 
     @Override
     public void onResult(Hypothesis hypothesis) {
 
+        if (hypothesis == null) {
+            return;
+        }
         String text = hypothesis.getHypstr();
 
-        ((TextView) findViewById(R.id.textView1))
-                .setText(text);
+
 
     }
 
